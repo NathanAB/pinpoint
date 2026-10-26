@@ -32,7 +32,8 @@ const SENTENCE_BREAK = /[.?!:;,\n]/
 const DETERMINERS = new Set(['the', 'this', 'that', 'these', 'those'])
 const NOT_MODIFIERS = new Set(['and', 'or', 'of', 'on', 'in', 'with', 'to', 'for', 'at', 'is', 'are', 'was', 'be', 'it', 'its'])
 const TRAILING_FILLER = new Set(['area', 'areas', 'part', 'parts', 'thing', 'things', 'stuff', 'bit', 'bits', 'section'])
-const CLAUSE = new Set(['we', 'you', 'they', 'i', 'he', 'she', 'it', 'that', 'which', 'who', 'where'])
+// Not "it": "the how it works page" names a page.
+const CLAUSE = new Set(['we', 'you', 'they', 'i', 'he', 'she', 'that', 'which', 'who', 'where'])
 const ENDS_WRONG = new Set(['the', 'a', 'an', 'on', 'of', 'in', 'to', 'with', 'for', 'and', 'or', 'at', 'by', 'from', 'is', 'are'])
 // Words that never name a part on their own: empty words, and the properties a change is about.
 const NOT_A_PART = new Set([
@@ -430,7 +431,7 @@ function trimmed(quoted: string): string | null {
   const words = cut > 0 ? all.slice(0, cut) : all
   while (words.length > 1) {
     const last = (words[words.length - 1]?.[0] ?? '').toLowerCase()
-    if (!ENDS_WRONG.has(last) && !TRAILING_FILLER.has(last) && !NOT_A_PART.has(last)) break
+    if (!ENDS_WRONG.has(last) && !TRAILING_FILLER.has(last)) break
     words.pop()
   }
   const end = words[words.length - 1]

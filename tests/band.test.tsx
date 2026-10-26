@@ -391,12 +391,12 @@ test('a phrase Haiku names in other words or case is not taken down', async ($, 
   expect(marked(r, world.box.text)).toEqual(['The header'])
 })
 
-test('a phrase ending in a property word is cut back to the part', async ($, on) => {
-  const { clock, world } = desktop(on, 'the hero padding | src/ui/app-header.tsx')
-  await typeDraft($, clock, 'shrink the hero padding on mobile')
+test('a phrase with "it" in its name stays whole, and one ending in a property word is dropped', async ($, on) => {
+  const { clock, world } = desktop(on, 'the how it works page | src/ui/page-header.tsx\nconstricted text width | src/ui/app-header.tsx')
+  await typeDraft($, clock, 'remove the github link on the how it works page. remove constricted text width stuff')
 
   const r = await edit($, { text: world.box.text, cursor: 0, start: 0, end: 0, inputText: '' })
-  expect(marked(r, world.box.text)).toEqual(['the hero'])
+  expect(marked(r, world.box.text)).toEqual(['the how it works page'])
 })
 
 test('dismissing a phrase hides it in any case', async ($, on) => {

@@ -113,6 +113,9 @@ export const register: Register = on => {
 
   on('prompt.edit', async ($, e, next) => {
     const r = await next(e)
+    // Picks and dismissals belong to the draft they were made in; an empty box ends it. Claude Code
+    // raises no event when Esc clears the box, so the next edit, starting from empty, says so.
+    if (e.text === '' || r.text === '') forget()
     const isTyped = r.text !== e.text
     if (isTyped) {
       s.isDirty = true
@@ -146,28 +149,13 @@ export const register: Register = on => {
     return next({ ...e, text })
   })
 
-  // A clear (Esc, a stash) starts a new draft, as a send does. A recalled entry or an undo is a draft of
-  // the person's own: show what memory has for it and read it.
-  on('prompt.change', ($, e, next) => {
-    if (e.origin.kind === 'clear') reset($)
-    else {
-      s.phrases = present(e.text)
-      s.focus = null
-      s.isDirty = true
-      s.isMidWord = false
-      kick($)
-      $.ui.invalidate('ui.render')
-    }
-    return next(e)
-  })
-
   on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
-    return guesses($, e) ?? next(e)
+    return band($, e) ?? next(e)
   })
 }
 
-function guesses($: EngineInterface, e: RenderInput<'AbovePrompt'>) {
+function band($: EngineInterface, e: RenderInput<'AbovePrompt'>) {
   if (s.phrases.length === 0) return null
   const { Box, Button, Text } = $.ui.resolve(e)
   const choice = (p: Phrase, g: Guess) => {
@@ -184,25 +172,25 @@ function guesses($: EngineInterface, e: RenderInput<'AbovePrompt'>) {
   }
 
   return (
-    <Box flexDirection="column" gap="md">
+    <Box flexDirection="column" gap={1}>
       {s.phrases.map(p => {
         const phrase = (
-          <Text color={s.picks.has(p.text) ? 'success' : 'warning'} weight="medium">
+          <Text color={s.picks.has(p.text) ? 'success' : 'warning'}>
             “{p.text}”
           </Text>
         )
         if (p.text === s.focus) {
           const width = Math.max(...p.guesses.map(g => g.name.length)) + 8
           return (
-            <Box key={p.text} flexDirection="column" gap="md">
-              <Box gap="md" alignItems="center">
+            <Box key={p.text} flexDirection="column" gap={1}>
+              <Box gap={1} alignItems="center">
                 <Text>Which part is {phrase}?</Text>
                 <Button key={`none:${p.text}`} label="None of these" onPress={() => dismiss($, p)} />
               </Box>
               {p.guesses.map(g => (
-                <Box key={idOf(g)} gap="sm" alignItems="center">
+                <Box key={idOf(g)} gap={1} alignItems="center">
                   <Box width={width}>{choice(p, g)}</Box>
-                  <Text dimColor mono size="footnote">
+                  <Text dimColor>
                     {g.symbol ? `${g.path} › ${g.symbol}` : g.path}
                   </Text>
                 </Box>
@@ -211,7 +199,7 @@ function guesses($: EngineInterface, e: RenderInput<'AbovePrompt'>) {
           )
         }
         return (
-          <Box key={p.text} gap="sm" alignItems="center">
+          <Box key={p.text} gap={1} alignItems="center">
             {phrase}
             <Text dimColor>→</Text>
             {p.guesses.map(g => choice(p, g))}
@@ -339,7 +327,7 @@ async function haiku($: EngineInterface, draft: string, signal: AbortSignal): Pr
     if (res.status === 429) s.directOffUntil = Date.now() + BACKOFF_MS
   }
   const r = await $.model.complete(
-    { model: 'haiku', system: s.rules, prompt: [...project.map(b => (b.cache ? { text: b.text, cache: true as const } : { text: b.text })), { text: message }], timeoutMs: 10_000 },
+    { model: 'haiku', system: s.rules, prompt: [...project.map(b => b.text), message].join('\n\n'), timeoutMs: 10_000 },
     { signal },
   )
   return r.isAnswered ? { ok: true, text: r.text, usage: r.usage, via: 'engine' } : { ok: false, reason: r.reason }
@@ -361,15 +349,19 @@ function dismiss($: EngineInterface, p: Phrase) {
   $.ui.invalidate('ui.render')
 }
 
+function forget() {
+  s.picks.clear()
+  s.dismissed.clear()
+  s.rejected.clear()
+}
+
 function reset($: EngineInterface) {
   s.isDirty = false
   s.epoch += 1
   s.inflight?.abort()
   s.order.clear()
   s.memory.clear()
-  s.picks.clear()
-  s.dismissed.clear()
-  s.rejected.clear()
+  forget()
   s.lastAsked = ''
   s.phrases = []
   s.focus = null

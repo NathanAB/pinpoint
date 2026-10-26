@@ -47,7 +47,6 @@ function desktop(on: On, ...replies: string[]) {
     world.box = { text: e.text, cursor: e.text.length }
     return { isFilled: true }
   })
-  on('prompt.change', (_, e) => ({ text: e.text }))
   on('prompt.submit', (_, e) => {
     world.sent = e.text
     return { text: e.text }
@@ -72,11 +71,6 @@ function desktop(on: On, ...replies: string[]) {
 function edit($: Engine, e: Omit<PromptEditInput, 'origin'>): Promise<PromptEditResult> {
   const prompt = $.prompt as unknown as { edit: (input: PromptEditInput) => Promise<PromptEditResult> }
   return prompt.edit({ origin: { kind: 'composer' }, ...e })
-}
-
-function change($: Engine, text: string, kind: 'clear' | 'history'): Promise<unknown> {
-  const prompt = $.prompt as unknown as { change: (input: unknown) => Promise<unknown> }
-  return prompt.change({ text, cursor: text.length, origin: { kind } })
 }
 
 function turnComplete($: Engine, answer: string): Promise<unknown> {
@@ -367,7 +361,7 @@ test('an instant phrase goes dark when the draft turns to code', async ($, on) =
   expect(marked(r, 'the header is set in app.tsx ')).toEqual([])
 })
 
-test('clearing the draft forgets its phrases and picks, as sending does', async ($, on) => {
+test('clearing the box forgets its picks, as sending does', async ($, on) => {
   const { clock, world } = desktop(on, HEADER_GUESSES)
   await typeDraft($, clock, 'make the header less cramped')
   const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
@@ -375,8 +369,6 @@ test('clearing the draft forgets its phrases and picks, as sending does', async 
   await ui.unmount()
 
   world.box = { text: '', cursor: 0 }
-  await change($, '', 'clear')
-  expect(await bandText($)).not.toContain('header')
   await edit($, { text: '', cursor: 0, start: 0, end: 0, inputText: 'the header is too tall' })
   await clock.advance(700)
   await $.prompt.submit({ text: world.box.text, wait: false, origin: { kind: 'composer' } })

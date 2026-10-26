@@ -23,7 +23,11 @@ A project whose list fits about 24k tokens is sent whole, once, and cached. A la
 
 ## Install
 
-TODO: the marketplace install command once it's listed.
+pinpoint is waiting for review on [statuslin.es](https://statuslin.es/mods), which will list the install command once it's approved. To try it before then, clone this repo and start Claude Code with it:
+
+```bash
+claude --plugin-dir path/to/pinpoint
+```
 
 Works in the terminal and in Claude Desktop. Reads use your signed-in Claude Code account, and fall back to the engine's own model call when that isn't available.
 

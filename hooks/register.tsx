@@ -92,17 +92,12 @@ export const register: Register = on => {
     const result = await next(e)
     // Listing a large project takes seconds; the session starts without waiting, and reads begin once it lands.
     list($).catch(() => {})
-    $.ui.status(undefined)
     $.ui.invalidate('ui.render')
     return result
   })
 
   on('session.attach', ($, e, next) => {
     $.ui.invalidate('ui.render')
-    return next(e)
-  })
-
-  on('session.detach', (_$, e, next) => {
     return next(e)
   })
 

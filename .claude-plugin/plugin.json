@@ -1,0 +1,11 @@
+{
+  "name": "pinpoint",
+  "version": "0.1.0",
+  "description": "As you type to Claude, Haiku spots vague references to parts of your project (\"the header\", \"the slug generator\") and lets you pin each to the exact file or function before you send.",
+  "author": { "name": "NathanAB", "url": "https://github.com/NathanAB" },
+  "homepage": "https://github.com/NathanAB/pinpoint",
+  "repository": "https://github.com/NathanAB/pinpoint",
+  "license": "MIT",
+  "keywords": ["prompt", "context", "haiku", "files"],
+  "types": "./types/index.d.ts"
+}
